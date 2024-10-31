@@ -5,8 +5,8 @@ from torch.utils.data import DataLoader
 import numpy as np
 
 import os
-# from utils import read_inputs, count_letters, print_line, score
-from .dataset import CharCountDataset
+from utils import read_inputs, count_letters, print_line, score
+from dataset import CharCountDataset
 
 class TransformerLayer(nn.Module):
     def __init__(self, d_model, n_heads):
@@ -63,7 +63,7 @@ class MultiHeadSelfAttention(nn.Module):
 
 # Custom Transformer Model
 class CustomTransformer(nn.Module):
-    def __init__(self, vocab_size, d_model, n_heads, num_layers, max_len):
+    def __init__(self, vocab_size, d_model=128, n_heads=4, num_layers=2, max_len=20):
         super(CustomTransformer, self).__init__()
         self.embedding = nn.Embedding(vocab_size, d_model)
         self.positional_enc = nn.Parameter(torch.randn(max_len, d_model))  # Learned positional encodings
@@ -106,9 +106,20 @@ class CustomTransformer(nn.Module):
         predictions = probabilities.argmax(dim=-1)
         
         return logits, predictions
+    
+    @classmethod
+    def from_pretrained(cls, checkpoint_path, vocab_size, device):
+        # Initialize the model
+        model = cls(vocab_size)
+        
+        # Load the checkpoint
+        checkpoint = torch.load(checkpoint_path, map_location=device)
+        model.load_state_dict(checkpoint['model_state_dict'])
+        
+        return model.to(device)
 
 # Initialize dataset, model, optimizer, and criterion
-def train_classifier(texts, epochs=3, batch_size=32, max_len=20, d_model=128, n_heads=4, num_layers=2, lr=0.001):
+def train_classifier(texts, epochs=3, batch_size=32, max_len=20, lr=0.001):
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     
     # Dataset and DataLoader
@@ -118,7 +129,7 @@ def train_classifier(texts, epochs=3, batch_size=32, max_len=20, d_model=128, n_
     dataloader = DataLoader(dataset, batch_size=batch_size, shuffle=True)
 
     # Model, optimizer, and loss function
-    model = CustomTransformer(dataset.vocab_size, d_model, n_heads, num_layers, max_len).to(device)
+    model = CustomTransformer(vocab_size=dataset.vocab_size).to(device)
     optimizer = optim.Adam(model.parameters(), lr=lr)
     criterion = nn.CrossEntropyLoss()
 
@@ -142,13 +153,16 @@ def train_classifier(texts, epochs=3, batch_size=32, max_len=20, d_model=128, n_
     return model
 
 if __name__ == "__main__":
-  texts = read_inputs(
-        os.path.join("data", "train.txt")
-  )
-  model = train_classifier(texts)
-
   test_inputs = read_inputs(os.path.join("data", "test.txt"))
   test_dataset = CharCountDataset(texts=test_inputs)
+
+  # Loading the model from checkpoint
+  model = CustomTransformer.from_pretrained(
+    checkpoint_path='data/trained_model.ckpt',
+    vocab_size=test_dataset.vocab_size,
+    device='cuda' if torch.cuda.is_available() else 'cpu'
+  )
+
   model.eval()
   
   golds = []

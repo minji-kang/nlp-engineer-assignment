@@ -1,7 +1,7 @@
 import torch
 from torch.utils.data import Dataset, DataLoader
 
-from .utils import read_inputs, count_letters
+from utils import read_inputs, count_letters
 import os
 
 class CharCountDataset(Dataset):
