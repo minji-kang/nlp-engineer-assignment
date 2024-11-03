@@ -1,6 +1,6 @@
 import numpy as np
 import os
-import uvicorn
+import uvicorn, nest_asyncio
 import torch
 
 from src.nlp_engineer_assignment import (
@@ -68,12 +68,4 @@ def train_model():
 
 if __name__ == "__main__":
     train_model()
-    '''
-    uvicorn.run(
-        "src.nlp_engineer_assignment.api:app",
-        host="0.0.0.0",
-        port=8000,
-        log_level="info",
-        workers=1
-    )
-    '''
+    

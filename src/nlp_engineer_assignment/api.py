@@ -1,9 +1,7 @@
 from fastapi import FastAPI
 from starlette.responses import RedirectResponse
 from fastapi.middleware.cors import CORSMiddleware
-
 import nest_asyncio
-from pyngrok import ngrok
 
 import torch
 from .transformer import CustomTransformer
@@ -12,14 +10,6 @@ from .dataset import CharCountDataset
 app = FastAPI(
     title="NLP Engineer Assignment",
     version="1.0.0"
-)
-
-app.add_middleware(
-    CORSMiddleware,
-    allow_origins=['*'],
-    allow_credentials=True,
-    allow_methods=['*'],
-    allow_headers=['*'],
 )
 
 device = 'cuda' if torch.cuda.is_available() else 'cpu'
@@ -52,8 +42,5 @@ async def predict(text: str):
         'input': text,
         'prediction': ", ".join(map(str, prediction[0].tolist()))
     }
-
-ngrok_tunnel = ngrok.connect(8000)
-print('Public URL:', ngrok_tunnel.public_url)
 
 nest_asyncio.apply()
