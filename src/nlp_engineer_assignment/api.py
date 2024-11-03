@@ -1,12 +1,35 @@
 from fastapi import FastAPI
 from starlette.responses import RedirectResponse
+from fastapi.middleware.cors import CORSMiddleware
 
+import nest_asyncio
+from pyngrok import ngrok
+
+import torch
+from .transformer import CustomTransformer
+from .dataset import CharCountDataset
 
 app = FastAPI(
     title="NLP Engineer Assignment",
     version="1.0.0"
 )
 
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=['*'],
+    allow_credentials=True,
+    allow_methods=['*'],
+    allow_headers=['*'],
+)
+
+device = 'cuda' if torch.cuda.is_available() else 'cpu'
+
+model = CustomTransformer.from_pretrained(
+    checkpoint_path='data/trained_model.ckpt',
+    vocab_size=27,
+    device=device,
+  )
+model.eval()
 
 @app.get("/", include_in_schema=False)
 async def index():
@@ -15,7 +38,22 @@ async def index():
     """
     return RedirectResponse(url="/docs")
 
+@app.post('/character/predict')
+async def predict(text: str):
+    dataset = CharCountDataset(text)
+    # Tokenize text into character indices
+    input_seq = [dataset.char_to_index(char) for char in text]
+    # Convert lists to tensors
+    input_tensor = torch.tensor(input_seq, dtype=torch.long).to(device)
+    
+    logits, prediction = model.generate(input_tensor)
+    
+    return {
+        'input': text,
+        'prediction': ", ".join(map(str, prediction[0].tolist()))
+    }
 
-# TODO: Add a route to the API that accepts a text input and uses the trained
-# model to predict the number of occurrences of each letter in the text up to
-# that point.
+ngrok_tunnel = ngrok.connect(8000)
+print('Public URL:', ngrok_tunnel.public_url)
+
+nest_asyncio.apply()

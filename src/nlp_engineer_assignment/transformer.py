@@ -5,8 +5,8 @@ from torch.utils.data import DataLoader
 import numpy as np
 
 import os
-from utils import read_inputs, count_letters, print_line, score
-from dataset import CharCountDataset
+from .utils import read_inputs, count_letters, print_line, score
+from .dataset import CharCountDataset
 
 class TransformerLayer(nn.Module):
     def __init__(self, d_model, n_heads):
@@ -109,6 +109,9 @@ class CustomTransformer(nn.Module):
     
     @classmethod
     def from_pretrained(cls, checkpoint_path, vocab_size, device):
+        """
+        Returns a model from a checkpoint.
+        """
         # Initialize the model
         model = cls(vocab_size)
         
@@ -136,7 +139,6 @@ def train_classifier(texts, epochs=3, batch_size=32, max_len=20, lr=0.001):
     model.train()
     for epoch in range(epochs):
         for inputs, targets in dataloader:
-            targets = targets.type(torch.LongTensor)
             inputs, targets = inputs.to(device), targets.to(device)
             optimizer.zero_grad()
             

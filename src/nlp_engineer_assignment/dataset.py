@@ -1,7 +1,7 @@
 import torch
 from torch.utils.data import Dataset, DataLoader
 
-from utils import read_inputs, count_letters
+from .utils import read_inputs, count_letters
 import os
 
 class CharCountDataset(Dataset):
@@ -46,7 +46,7 @@ class CharCountDataset(Dataset):
 
         # Convert lists to tensors
         input_tensor = torch.tensor(input_seq, dtype=torch.long)
-        target_tensor = torch.tensor(target_counts, dtype=torch.float32)
+        target_tensor = torch.tensor(target_counts, dtype=torch.long)
         
         return input_tensor, target_tensor
 
